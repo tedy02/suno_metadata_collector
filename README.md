@@ -11,7 +11,7 @@ Don't worry, most of the heavy lifting is handled by the Python scripts, with mu
 3. Open a terminal window and run: **python refresh_and_collect.py**
 4. Watch for the message **"Unauthorized. Refresh token!"** in the terminal.
 5. Each time you see that message, repeat step 2.
-6. When the crawler completes, it will display its status and let you know if the **suno_clips.xlsx** Excel file was updated successfully.
+6. When the crawler completes, it will display its status and let you know if the **suno_clips.xlsx** Excel file was created/updated successfully.
 
 *Everything else is automated for you!*
 

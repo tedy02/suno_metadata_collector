@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Suno Metatag Collector v2.0.1
 
@@ -24,10 +23,10 @@ import json
 import os
 import pathlib
 import re
+import subprocess
 import sys
 import time
-import subprocess
-from typing import Dict, Any, Set, List, Optional
+from typing import Any, Dict, List, Optional, Set
 
 __version__ = "2.0.1"
 __version_notes__ = """- Excel auto-named as suno_clips_YYYY-MM-DD.xlsx with _1, _2 suffixes if needed
@@ -45,6 +44,7 @@ except ImportError:
     pyperclip = None
 
 import pandas as pd
+
 
 def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(description="Suno Metatag Collector")

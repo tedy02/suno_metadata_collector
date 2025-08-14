@@ -15,3 +15,5 @@ auto.json
 suno_clips_*.xlsx
 suno_api_dump/pages/*.json
 logs/*.log
+logs
+suno_api_dump

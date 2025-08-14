@@ -1,5 +1,5 @@
 #!/bin/bash
-# Suno Metatag Collector v2.0.1 quick runner for Linux/Mac users
+# Suno Metatag Collector v2.0.2 quick runner for Linux/Mac users
 
 set -e
 

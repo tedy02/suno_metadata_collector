@@ -1,20 +1,19 @@
-# Suno Metatag Collector v2.0.1
+# Suno Metatag Collector v2.0.2
 
 ![Suno Metadata Collector](smc_main_image.webp)
 
 [![MIT License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Python 3.9+](https://img.shields.io/badge/python-3.9%2B-blue.svg)](https://www.python.org/downloads/)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
 [![Requirements Status](https://img.shields.io/badge/requirements-up%20to%20date-brightgreen)](requirements.txt)
 
-Single-script workflow that captures tokens, keeps them fresh with a background watcher, crawls all Suno workspaces, and exports a neat Excel workbook (plus optional Parquet).
+Script workflow that captures tokens, keeps them fresh with a background watcher, crawls all Suno workspaces, and exports a neat Excel workbook (plus optional Parquet).
 
 ---
 
-## ✨ What's New in v2.0.1
+## ✨ What's New in v2.0.2
 
-- Excel auto-named `suno_clips_YYYY-MM-DD.xlsx`. If a file with today’s date exists, a numeric suffix is added: `suno_clips_YYYY-MM-DD_1.xlsx`, `…_2.xlsx`, etc.
-- Version is logged at the start of each run, along with short notes.
-- This README lists the current extracted metadata fields (94), subject to change as Suno evolves.
+- Minor script tweaks
+- EMOJIS!!
 
 **Security default:** On successful completion, token files `auth.json` and `auto.json` are deleted automatically.
 
@@ -22,7 +21,7 @@ Single-script workflow that captures tokens, keeps them fresh with a background 
 
 ## ⚙️ Requirements
 
-- **Python 3.9+**
+- **Python 3.10+**
 - **Install dependencies:**
 
   ```bash
@@ -56,7 +55,6 @@ Single-script workflow that captures tokens, keeps them fresh with a background 
 6. Run: Launch `run_collector.bat` (Windows) **OR** `run_collector.sh` (Linux/macOS) **OR**
 
    ```bash
-   python -m pip install -r requirements.txt
    python suno_metadata_collector.py
    ```
 
@@ -236,9 +234,12 @@ Here are the changes/enhancements I would like to make in the future. If you hav
 
 Feedback, questions, and contributions are welcome!
 Feel free to [open an issue](https://github.com/tedy02/suno_metadata_collector/issues) or submit a pull request.
+Contact email address: <tedy02@nitesidedjs.com>
 
 ---
 
 ## 📜 License
 
 MIT
+
+<www.thenitesidedjs.com>

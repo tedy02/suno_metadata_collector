@@ -2,7 +2,7 @@
 """
 Suno Metatag Collector v2.0.1
 
-All-in-one Suno metatag/metadata collector (Python 3.9+)
+All-in-one Suno metatag/metadata collector (Python 3.10+)
 
 What's new in v2.0.1
 - Excel auto-named as suno_clips_YYYY-MM-DD.xlsx with _1, _2 suffixes if needed
@@ -28,10 +28,10 @@ import sys
 import time
 from typing import Any, Dict, List, Optional, Set
 
-__version__ = "2.0.1"
+__version__ = "2.0.2"
 __version_notes__ = """- Excel auto-named as suno_clips_YYYY-MM-DD.xlsx with _1, _2 suffixes if needed
 - Version info logged at start of each run
-- README documents current 94 extracted metadata fields
+- Added emojis
 """
 
 import requests
@@ -66,7 +66,7 @@ PAGE_LIMIT: int = 250
 
 ROOT = pathlib.Path(".").resolve()
 AUTH_FILE = ROOT / "auth.json"
-AUTO_FILE = ROOT / "auto.json"   # extra safeguard: delete on success if present
+AUTO_FILE = ROOT / "auto.json"
 OUT_DIR   = ROOT / ARGS.out_dir
 PAGE_DIR  = OUT_DIR / "pages"
 PARQUET_OUT = ROOT / "suno_clips.parquet"
@@ -116,9 +116,9 @@ def _print_header_workspace(name: str, expected: int) -> None:
     log(f"\n=== {name} ({expected} rows) ===")
 
 def _print_page_line(page: int, new_rows: int, total: int) -> None:
-    log(f"  • page {page:<4} adding {new_rows:<3} new rows   total # of rows {total}")
+    log(f"  📄 page {page:<4} ➕ adding {new_rows:<3} new rows 🟰 total # of rows {total}")
 
-COMMON_QS: Dict[str, Any] = dict(
+COMMON_QS: Dict[str, Any] = dict(  # noqa: UP006
     hide_disliked="true",
     hide_studio_clips="true",
     hide_gen_stems="true",
@@ -159,7 +159,7 @@ def _extract_tokens_from_curl(curl: str) -> Optional[Dict[str, str]]:
 def _write_auth(tokens: Dict[str, str]) -> None:
     AUTH_FILE.write_text(json.dumps(tokens, indent=2), encoding="utf-8")
     when = time.strftime("%Y-%m-%d %H:%M:%S")
-    log(f"[{when}] auth.json updated")
+    log(f"🗝️ [{when}] auth.json updated")
 
 def _load_tokens() -> Dict[str, str]:
     d = json.loads(AUTH_FILE.read_text(encoding="utf-8"))
@@ -179,10 +179,10 @@ def _headers() -> Dict[str, str]:
     }
 
 def _stdin_watcher_loop() -> None:
-    log("Watcher (stdin mode): paste a 'Copy as cURL (bash)'; blank line to submit. Ctrl+C to stop.")
+    log("👁️ Watcher (stdin mode): paste a 'Copy as cURL (bash)'; blank line to submit. Ctrl+C to stop.")
     while True:
         _bell()
-        log("Paste cURL now:")
+        log("📋 Paste cURL now:")
         lines: List[str] = []
         while True:
             try:
@@ -198,14 +198,14 @@ def _stdin_watcher_loop() -> None:
             if toks:
                 _write_auth(toks)
             else:
-                log("Watcher: cURL missing required headers. Ensure you used 'Copy as cURL (bash)'.")
+                log("👁️ Watcher: cURL missing required headers. Ensure you used 'Copy as cURL (bash)'.")
         else:
-            log("Watcher: Input did not start with 'curl'. Try again.")
+            log("👁️ Watcher: Input did not start with 'curl'. Try again.")
 
 def _run_watcher_loop(poll_interval: float = 2.0) -> None:
-    log("Watcher: listening for 'Copy as cURL (bash)'. Close this window to stop.")
+    log("👁️ Watcher: listening for 'Copy as cURL (bash)'. Close this window to stop.")
     if pyperclip is None:
-        log("Watcher: 'pyperclip' not installed. Falling back to manual paste mode.")
+        log("👁️ Watcher: 'pyperclip' not installed. Falling back to manual paste mode.")
         _stdin_watcher_loop()
         return
     last = ""
@@ -220,7 +220,7 @@ def _run_watcher_loop(poll_interval: float = 2.0) -> None:
                 last = txt
                 _write_auth(toks)
             else:
-                log("Watcher: detected cURL but missing required headers.")
+                log("👁️ Watcher: detected cURL but missing required headers.")
         time.sleep(poll_interval)
 
 def _spawn_watcher_subprocess() -> Optional[subprocess.Popen]:
@@ -232,11 +232,11 @@ def _spawn_watcher_subprocess() -> Optional[subprocess.Popen]:
             return subprocess.Popen(args, creationflags=getattr(subprocess, "CREATE_NEW_CONSOLE", 0), env=env)
         return subprocess.Popen(args, start_new_session=True, env=env)
     except Exception as e:
-        log(f"Warning: could not start watcher subprocess: {e}")
+        log(f"⚠️ Warning: could not start watcher subprocess: {e}")
         return None
 
 def _wait_for_auth_refresh(old_mtime: float) -> None:
-    log("Waiting for auth.json refresh …")
+    log("⌛ Waiting for auth.json refresh …")
     _bell()
     while True:
         try:
@@ -245,7 +245,7 @@ def _wait_for_auth_refresh(old_mtime: float) -> None:
         except FileNotFoundError:
             pass
         time.sleep(2)
-    log("auth.json updated")
+    log("🗝️ auth.json updated")
 
 def api_get(path: str, **qs) -> Dict[str, Any]:
     url = f"{ORIGIN}/api/{path.lstrip('/')}"
@@ -253,12 +253,12 @@ def api_get(path: str, **qs) -> Dict[str, Any]:
         try:
             r = SESSION.get(url, headers=_headers(), params={**COMMON_QS, **qs}, timeout=45)
         except Exception as e:
-            log(f"Request failed: {e}. Retrying in 10s…")
+            log(f"❌ Request failed: {e}. Retrying in 10s…")
             time.sleep(10)
             continue
 
         if r.status_code == 401:
-            log("[!] 401 Unauthorized. Waiting for new token.")
+            log("🚫 401 Unauthorized. ⌛ Waiting for new token.")
             try:
                 old_m = AUTH_FILE.stat().st_mtime
             except FileNotFoundError:
@@ -269,19 +269,19 @@ def api_get(path: str, **qs) -> Dict[str, Any]:
         if r.status_code == 429:
             retry_after = int(r.headers.get("Retry-After", "0") or 0)
             wait = max(retry_after, 30)
-            log(f"[!] 429 Too Many Requests. Waiting {wait}s before retrying…")
+            log(f"⚠️ 429 Too Many Requests. ⌛ Waiting {wait}s before retrying…")
             time.sleep(wait)
             continue
 
         if r.status_code >= 400:
-            log_http_error("[!]", r.status_code, r.text)
+            log_http_error("⚠️", r.status_code, r.text)
             time.sleep(10)
             continue
 
         try:
             return r.json()
         except ValueError:
-            log("[!] Non-JSON response; retrying in 10s…")
+            log("❔ Non-JSON response; retrying in 10s…")
             time.sleep(10)
 
 def _clean_ws_name(name: Optional[str], fb: str) -> str:
@@ -344,13 +344,13 @@ def crawl_all_projects() -> Dict[str, int]:
             clip_count=len(merged_rows),
             project_clips=merged_rows
         ), out.open("w", encoding="utf-8"), indent=2)
-        log(f"  → merged {len(merged_rows)} rows → {out.name}")
+        log(f"  🗂️ merged {len(merged_rows)} rows → {out.name}")
         stats[pname_clean] = len(merged_rows)
 
-    log("\nAll project clip data stored in " + str(OUT_DIR))
-    log("\nCLIP COUNTS PER PROJECT:")
+    log("\n📂 All project clip data stored in " + str(OUT_DIR))
+    log("\n🎶 CLIP COUNTS PER PROJECT:")
     for pname, count in stats.items():
-        log(f" - {pname}: {count}")
+        log(f" ✔️ {pname}: {count}")
     return stats
 
 def _flatten(obj: Dict[str, Any], prefix: str = "") -> Dict[str, Any]:
@@ -391,7 +391,7 @@ def _make_excel_path() -> pathlib.Path:
 def build_excel(write_parquet: bool = False) -> pathlib.Path:
     clip_files = list(OUT_DIR.glob("*_clips.json"))
     if not clip_files:
-        log("No *_clips.json files found or they contain no clips. Skipping Excel.")
+        log("❌ No *_clips.json files found or they contain no clips. Skipping Excel.")
         return _make_excel_path()
 
     project_dfs: Dict[str, pd.DataFrame] = {}
@@ -434,14 +434,14 @@ def build_excel(write_parquet: bool = False) -> pathlib.Path:
         for name, df in project_dfs.items():
             df.to_excel(writer, sheet_name=name, index=False)
 
-    log(f"Excel written to {excel_out.resolve()}")
+    log(f"📝 Excel written to {excel_out.resolve()}")
 
     if write_parquet and not all_df.empty:
         try:
             all_df.to_parquet(PARQUET_OUT, index=False)
-            log(f"Parquet written to {PARQUET_OUT.resolve()}")
+            log(f"📝 Parquet written to {PARQUET_OUT.resolve()}")
         except Exception as e:
-            log(f"Parquet not written (install 'pyarrow' to enable): {e}")
+            log(f"❌ Parquet not written (install 'pyarrow' to enable): {e}")
 
     return excel_out
 
@@ -451,11 +451,11 @@ def ask_for_initial_curl() -> str:
         try:
             txt = pyperclip.paste()
             if isinstance(txt, str) and txt.startswith("curl"):
-                log("Copied cURL from clipboard.")
+                log("📋 Copied cURL from clipboard.")
                 return txt
         except Exception:
             pass
-    log("Paste cURL (end with empty line):")
+    log("📋 Paste cURL (end with empty line):")
     lines: List[str] = []
     while True:
         ln = input().strip()
@@ -473,7 +473,7 @@ def _open_excel_file(path: pathlib.Path) -> None:
         else:
             subprocess.run(["xdg-open", str(path)], check=False)
     except Exception as e:
-        log(f"Could not auto-open Excel file: {e}")
+        log(f"⚠️ Could not auto-open Excel file: {e}")
 
 def _cleanup_tokens_on_success() -> None:
     """Security cleanup on successful completion: remove auth.json and auto.json if present."""
@@ -481,28 +481,27 @@ def _cleanup_tokens_on_success() -> None:
         try:
             if p.exists():
                 p.unlink()
-                log(f"Deleted token file: {p.name}")
+                log(f"🗑️  Deleted token file: {p.name}")
         except Exception as e:
-            log(f"Warning: could not delete {p.name}: {e}")
+            log(f"⚠️ Warning: could not delete {p.name}: {e}")
 
 def _main() -> int:
-    log(f"Suno Metatag Collector v{__version__} starting")
-    log("Version notes:\n" + __version_notes__.strip())
+    log(f"🎵 Suno Metatag Collector v{__version__} starting 🎵")
 
     watcher = None
     if not ARGS.no_watcher:
         watcher = _spawn_watcher_subprocess()
         if watcher:
-            log(f"Watcher PID: {watcher.pid}")
+            log(f"👁️  Watcher PID: {watcher.pid}")
         else:
-            log("Note: watcher could not be started. You can still paste tokens manually if needed.")
+            log("👁️❌ Note: watcher could not be started. You can still paste tokens manually if needed.")
     else:
-        log("Watcher disabled via --no-watcher")
+        log("👁️❌ Watcher disabled via --no-watcher")
 
     curl = ask_for_initial_curl()
     toks = _extract_tokens_from_curl(curl)
     if not toks:
-        log("Missing header(s). Copy as cURL (bash) and try again.")
+        log("❌ Missing header(s). Copy as cURL (bash) and try again.")
         return 2
     _write_auth(toks)
 
@@ -510,7 +509,8 @@ def _main() -> int:
     excel_path = None
     try:
         crawl_all_projects()
-        log("\nCrawling finished, building Excel …")
+        when = time.strftime("%Y-%m-%d %H:%M:%S")
+        log(f"\n💫  Crawling finished at [{when}], building Excel …")
         excel_path = build_excel(write_parquet=ARGS.write_parquet)
         ok = True
     finally:
@@ -525,7 +525,8 @@ def _main() -> int:
                     pass
 
     if ok:
-        log("All done.")
+        log(f"😎 All done. Finished at [{when}]")
+        log("🌐 www.thenitesidedjs.com")
         _bell()
         if ARGS.open_excel.lower() == "true" and excel_path:
             _open_excel_file(excel_path)
@@ -542,7 +543,7 @@ def _watcher_entry() -> int:
 
 if __name__ == "__main__":
     if sys.version_info < (3, 9):
-        sys.exit("Python 3.9+ is required.")
+        sys.exit("❌ Python 3.10+ is required.")
     if ARGS.watcher:
         lf = os.environ.get("SUNO_LOG_FILE")
         if lf:
